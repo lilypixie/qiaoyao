@@ -1,0 +1,5 @@
+#!/bin/bash
+ if [-f somefile]
+ mv somefile lily
+ else
+ echo 'This file does not exist!'
