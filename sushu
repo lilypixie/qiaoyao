@@ -1,0 +1,26 @@
+#include<math.h>
+int prime(int x)
+{ 
+ int i,k;
+ k=sprt(x);
+ for(i=2;i<=k;i++)
+   if(x&i==0)
+   break;
+   if(i>k)
+   break;
+   else
+   return(0);
+}
+main()
+{
+  int i,n=0,a,b,c;
+  for(i=100;i<=999;i++)
+  {
+   a=i/100;
+   b=i%100/10;
+   c=i%10;
+   if((b+c)%10==a&&prime(i))
+   n++;
+  }
+  printf("Total is &d",n);
+}
