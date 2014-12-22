@@ -1,0 +1,13 @@
+main
+{int i,k,s=0,n;
+clrscr();
+for(i=1;i<1000;i++)
+{
+n=0;
+for (k=1;k=<=i-1;k++)
+if(i%k==0)
+n=n+k;
+if(n==i)s+=i;
+}
+printf("%d",s);
+}
