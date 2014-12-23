@@ -1,0 +1,68 @@
+#include <reg51.h>
+#define uchar unsigned char
+sbit RS =P1^7;
+sbit RW =P1^6;
+sbit E =P1^5;
+void init(void);
+void wc51r(uchar i);
+void wc51ddr(uchar i);
+void fbusy(void);
+//主函数
+void main(void)
+{ 
+ SP = 0x50;
+ init();
+ wc51r(0x80);
+ wc51ddr('Q');
+ wc51ddr('I');
+ wc51ddr('A');
+ wc51ddr('O');
+ wc51ddr(' ');
+ wc51ddr('Y');
+ wc51ddr('A');
+ wc51ddr('O');
+ wc51r(0xc4);
+ wc51ddr('2');
+ wc51ddr('0');
+ wc51ddr('8');
+ wc51ddr('1');      
+ wc51ddr('2');
+ wc51ddr('1');
+ wc51ddr('2');
+ wc51ddr('1');
+ wc51ddr('0');
+}
+//初始化函数
+void init()
+{
+ wc51r(0x01);
+ wc51r(0x38);
+ wc51r(0x0c);
+ wc51r(0x06);
+}
+//查忙
+void fbusy()
+{
+ P2=0xff; RS=0;RW=1;
+ E=0;E=1;
+ while (P2&0x80)
+ {E=0;E=1;}
+}
+//写命令函数
+void wc51r(uchar j)
+{
+  fbusy();
+  E=0;RS=0;RW=0;
+  E=1;
+  P2=j;
+  E=0;
+}
+//写数据函数
+void wc51ddr(uchar j)
+{
+ fbusy();
+ E=0;RS=1;RW=0;
+ E=1;
+ P2=j;
+ E=0;
+}
