@@ -1,0 +1,27 @@
+LIBRARY IEEE;
+USE IEEE.STD_LOGIC_1164.ALL;
+USE IEEE.STD_LOGIC_UNSIGNED.ALL;
+ENTITY Vhdl3 IS
+   PORT(Fin : IN STD_LOGIC;
+        ENABL,CLR : IN STD_LOGIC;
+        DOUT : BUFFER STD_LOGIC_VECTOR(31 DOWNTO 0);
+        ctrl:in std_logic);
+END Vhdl3;
+ARCHITECTURE behav OF Vhdl3 IS
+BEGIN
+  PROCESS( FIN )  
+    BEGIN
+IF ctrl='1'
+then DOUT<=(others=>'0');
+else
+  IF Fin'EVENT AND Fin='1'  THEN
+       IF ENABL='1' THEN
+             DOUT<=DOUT+1;
+       END IF;
+    END IF;
+END IF;
+END PROCESS; 
+END behav;      
+
+ 
+END behav;
