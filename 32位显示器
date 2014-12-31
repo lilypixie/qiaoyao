@@ -1,0 +1,28 @@
+LIBRARY IEEE;
+USE IEEE.STD_LOGIC_1164.ALL;
+
+ENTITY Vhdl5 IS
+   PORT(s3,s2,s1,s0 : IN STD_LOGIC;
+                  q : OUT STD_LOGIC_VECTOR(6 DOWNTO 0));
+END Vhdl5;
+ARCHITECTURE behav OF Vhdl5 IS
+      SIGNAL s:STD_LOGIC_VECTOR(3 DOWNTO 0);
+BEGIN
+  s<=s3&s2&s1&s0;
+  PROCESS( s3,s2,s1,s0 )  
+    BEGIN
+      CASE (s)IS
+      WHEN "0000" =>q<="1111110";
+      WHEN "0001" =>q<="0110000";
+      WHEN "0010" =>q<="1101101";
+      WHEN "0011" =>q<="1111001";
+      WHEN "0100" =>q<="0110011";
+      WHEN "0101" =>q<="1011011";
+      WHEN "0110" =>q<="1011111";
+      WHEN "0111" =>q<="1110000";
+      WHEN "1000" =>q<="1111111";
+      WHEN "1001" =>q<="1111011";
+      WHEN OTHERS=>NULL;
+      END CASE;
+END PROCESS; 
+END behav;
