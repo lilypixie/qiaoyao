@@ -1,0 +1,6 @@
+#!/bin/bash
+echo "Please enter the file name you want:"
+read  filename
+if [ -f $filename ]; then 
+file $filename;
+fi
