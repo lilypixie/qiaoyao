@@ -1,0 +1,242 @@
+#include<reg51.h>
+#include<stdio.h>
+#include<intrins.h>
+#define uchar unsigned char
+#define OSC 22118400
+#define BAUDRATE 9600
+
+sbit DIN =P1^0;
+sbit SCK =P1^1;
+sbit CS =P1^2;
+
+sbit RS =P1^7;
+sbit RW =P1^6;
+sbit E =P1^5;
+
+sbit key_fb=P0^0;//选择方波按钮 
+sbit key_jcb=P0^1;//选择锯齿波按钮 
+sbit key_sjb=P0^2;//选择三角波按钮 
+sbit key_txb=P0^3;//选择梯形按钮 
+
+unsigned char fb_state = 0;
+unsigned char jcb_state = 1;
+unsigned char sjb_state = 0;
+unsigned char txb_state = 0;
+
+void init(void);
+void wc51r(uchar i);
+void wc51ddr(uchar i);
+void fbusy(void);
+
+void DAConvert(unsigned int da);
+void delay(uchar);
+void pushbotton(); 
+
+void delay(uchar date) 
+{
+	uchar i,k; 
+	for(i=date;i>0;i--) 
+	for(k=50;k>0;k--); 
+} 
+
+void init()//初始程序
+{
+	wc51r(0x01);
+	wc51r(0x38);
+	wc51r(0x0c);
+	wc51r(0x06);
+}
+
+void fbusy()//查忙
+{
+	P2=0xff; 
+	RS=0;
+	RW=1;
+	E=0;
+	E=1;
+	while (P2&0x80)
+	{E=0;E=1;}
+}
+
+void wc51r(uchar j)//写命令函数
+{
+	fbusy();
+	E=0;
+	RS=0;
+	RW=0;
+	E=1;
+	P2=j;
+	E=0;
+}
+
+void wc51ddr(uchar j)//写数据函数
+{
+	fbusy();
+	E=0;
+	RS=1;
+	RW=0;
+	E=1;
+	P2=j;
+	E=0;
+}
+
+void DAConvert(unsigned int da)
+{
+	int i;
+	da<<=2;
+	da&=0xFFC;
+	SCK=0;
+	CS=0;
+	for(i=0;i<12;i++)
+	{
+		if(da&0x800)
+			DIN=1;
+		else 
+			DIN=0;
+
+		SCK=1;
+		SCK=0;
+		da<<=1;
+	}
+
+	CS=1;
+	SCK=1;
+	DIN=1;
+}
+
+void display1(void)
+{
+	wc51r(0x80);
+	wc51ddr('Q');
+	wc51ddr('I');
+	wc51ddr('A');
+	wc51ddr('O');
+	wc51ddr(' ');
+	wc51ddr('Y');
+	wc51ddr('A');
+	wc51ddr('O');
+	wc51r(0xc4);
+	wc51ddr('2');
+	wc51ddr('0');
+	wc51ddr('8');
+	wc51ddr('1');      
+	wc51ddr('2');
+	wc51ddr('1');
+	wc51ddr('2');
+	wc51ddr('1');
+	wc51ddr('0');
+}
+
+void display2(void)
+{
+	unsigned int i = 0,j = 0;
+
+	if(jcb_state)
+	{
+		for(i=0;i<1024;i+=32)//锯齿波
+		{
+			DAConvert(i);
+		}
+	}
+
+	if(fb_state)
+	{
+		for(i=1024,j=16;j>0;j--)//方波
+		{
+			DAConvert(i);
+		}
+		
+		for(i=0,j=16;j>0;j--)
+		{
+			DAConvert(i);
+		}
+	}
+
+	if(sjb_state)
+	{
+		for(i=0;i<=1024;i+=32)//三角波
+		{
+			DAConvert(i);
+		}
+
+		for(i=1024;i>=0;i-=32)
+		{
+			DAConvert(i);
+		}
+	}
+
+	if(txb_state)
+	{
+		for(i=0;i<1024;i+=32)//梯形波
+		{
+			DAConvert(i);
+		}
+
+		for(i=1024,j=10;j>0;j--)
+		{
+		    DAConvert(i);
+		}
+
+		for(i=1024;i>=0;i-=32)
+		{
+			DAConvert(i);
+		}
+	}
+}
+
+void keyscan(void)
+{
+    if(key_fb)
+	{
+		fb_state = 1;
+		jcb_state = 0;
+		sjb_state = 0;
+		txb_state = 0;
+	}
+
+	if(key_jcb)
+	{
+		fb_state = 0;
+		jcb_state = 1;
+		sjb_state = 0;
+		txb_state = 0;
+	}
+
+	if(key_sjb)
+	{
+		fb_state = 0;
+		jcb_state = 0;
+		sjb_state = 1;
+		txb_state = 0;
+	}
+
+	if(key_txb)
+	{
+		fb_state = 0;
+		jcb_state = 0;
+		sjb_state = 0;
+		txb_state = 1;
+	}
+}
+
+void main()
+{
+	SP = 0x50;
+	init();
+	display1();
+
+	TMOD=0x21;
+	SCON=0x50;
+	PCON|=0x80;
+	TL1=256-(OSC/12/16/BAUDRATE);
+	TH1=256-(OSC/12/16/BAUDRATE);
+	TR1=1;
+	TI=1;
+	printf("\r\nTLC5615 test starting...");
+
+	while(1)
+	{
+		keyscan();
+		display2();
+	}
+}
