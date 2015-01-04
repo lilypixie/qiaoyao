@@ -1,0 +1,37 @@
+#include  "config.h"
+
+void  DelayNS(uint32  dly)
+{  
+	uint32  i;
+
+   	for(; dly>0; dly--) 
+       for(i=0; i<50000; i++);
+}
+uint8  g_getch=0;
+int  main(void)
+{		
+   	int i;
+   	
+   	UART_Select(0);
+   	UART_Init();
+   	
+   	for(i=0;i<10;i++)
+   	{
+   	 UART_SendStr("Hello world! \n");
+   	}
+   	
+   	while(1)
+   	{
+   	 g_getch=UART_GetKey();
+   	 if(g_getch==0x0D)
+   	 {
+   	  UART_SendByte('\r');
+   	  UART_SendByte('\n');
+   	 }
+   	 else 
+   	 { 
+   	  UART_SendByte(g_getch);
+   	 }
+   	}
+   	return(0);
+}
