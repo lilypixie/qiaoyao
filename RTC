@@ -1,0 +1,110 @@
+#include  "config.h"
+
+
+char disp_buf[50];
+uint8 g_year=0;
+uint8 g_month=0;
+uint8 g_date=0;
+uint8 g_day=0;
+uint8 g_hour=0;
+uint8 g_min=0;
+uint8 g_sec=0;
+
+char*str_day[8]={"","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"};
+
+
+
+void  DelayNS(uint32  dly)
+{  
+	uint32  i;
+
+   	for(; dly>0; dly--) 
+       for(i=0; i<50000; i++);
+}
+
+//定义初始化时钟值
+
+#define INIT_YEAR 0x06
+#define INIT_MONTH 0x01
+#define INIT_DATE 0x06
+#define INIT_DAY 0x06
+#define INIT_HOUR 0x20
+#define INIT_MIN 0x30 
+#define INIT_SEC 0x00
+
+void RTC_Init(int force)
+{
+    int err;
+    uint32 bak;
+    
+    err=0;
+    if(force==0)
+    {
+     rRTCCON=0x00;
+     bak=rBCDYEAR&0xff;
+     if(bak>0x99) err++;//judge year
+     bak=rBCDMON&0x1f;
+     if(bak>0x12) err++;//judge month
+     bak=rBCDDATE&0x3f;
+     if(bak>0x31) err++;//judge date
+     bak=rBCDHOUR&0x3f;
+     if(bak>0x24) err++;//judge hour
+     bak=rBCDMIN&0x7f;
+     if(bak>0x59) err++;//judge min
+     bak=rBCDSEC&0x7f;
+     if(bak>0x59) err++;//judge sec
+     if(err==0)
+     return; 
+    }
+    
+    rRTCCON=0x01;
+    rBCDYEAR=INIT_YEAR&0xff;
+    rBCDMON=INIT_MONTH&0x1f;
+    rBCDDATE=INIT_DATE&0x3f;
+    rBCDDAY=INIT_DAY&0x07;
+    rBCDHOUR=INIT_HOUR&0x3f;
+    rBCDMIN=INIT_MIN&0x7f;
+    rBCDSEC=INIT_SEC&0x7f;
+    rRTCCON=0x00;
+}
+
+void RTC_Read(uint32 date)
+{
+  if(date)
+  {
+     g_year=rBCDYEAR;
+     g_month=rBCDMON;
+     g_date=rBCDDATE;
+     g_day=rBCDDAY;
+  }
+  g_hour=rBCDHOUR;
+  g_min=rBCDMIN;
+  g_sec=rBCDSEC;
+}
+
+void DispRTC(void)
+{
+  sprintf(disp_buf, "%02x:%02x:%02x  %10s, %2x/%2x/20%02x\n",g_hour,g_min,g_sec,str_day[g_day],g_month,g_date,g_year);
+  
+  UART_SendStr(disp_buf);
+}
+int  main(void)
+{	
+
+   int temp;
+   
+   UART_Select(0);
+   UART_Init();
+   RTC_Init(0);
+   RTC_Read(1);
+   
+   temp=0;
+   while(1)
+   {
+    while(temp==rBCDSEC);
+    temp=rBCDSEC;
+    RTC_Read(0);
+    DispRTC();
+   }	
+   	return(0);
+}
