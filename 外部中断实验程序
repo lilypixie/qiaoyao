@@ -1,0 +1,82 @@
+#include "config.h"
+
+#define  LED1_CON  (1<<11)
+#define  LED2_CON  (1<<12)
+#define  LED3_CON  (1<<4)
+#define  LED4_CON  (1<<6)
+
+#define  KEY_CON  (1<<4)
+uint8  ledcon=0x00;
+
+void DelayNS(uint32 dly)
+{
+  uint32 i;
+  for(;dly>0;dly--)
+    for(i=0;i<50000;i++);
+}
+
+void  IRQ_Eint4(void)
+{
+  int i; //按键去抖动
+  rGPECON=rGPECON&(~(0X03<<8));
+  for(i=0; i<10000;i++);
+  if(rGPEDAT&KEY_CON)
+  {
+   rGPECON=rGPECON|(0X02<<8);
+   rEINTPEND=(1<<4);
+   rSRCPND=(1<<4);
+   rINTPND=rINTPND;
+   return;
+  }
+  
+  rGPECON=rGPECON|(0X02<<8);
+  
+  if(ledcon)
+  {
+   ledcon=0;
+   rGPEDAT=rGPEDAT&(~LED1_CON);
+  }
+  else
+  {
+   ledcon=1;
+   rGPEDAT=rGPEDAT|LED1_CON;
+  }
+  
+  //清除中断标志
+  rEINTPEND=(1<<4);
+  rSRCPND=(1<<4);
+  rINTPND=rINTPND;
+}
+
+void EINT_init(void)
+{
+ rGPECON=(rGPECON&0xFFFFFCFF)|(0x02<<8);
+ rEXTINT0=(0x2<<16);
+ VICVectAddr[4]=(uint32)IRQ_Eint4;
+ 
+ rPRIORITY=0x00000000;
+ rINTMOD=0x00000000;
+ rINTMSK=~0x00000010;
+ rEINTMASK=~0x00000010;
+}
+
+void  LED_DispAlloff(void)
+{
+ rGPEDAT=rGPEDAT&(~(0x03<<11));
+ rGPHDAT=rGPHDAT&(~(0x05<<4));
+}
+
+int main(void)
+{
+ //初始化I/O
+ rGPECON=(rGPECON&(~(0x0f<<22)))|(0x05<<22);
+ 
+rGPHCON=(rGPHCON&(~(0x33<<8)))|(0x11<<8);
+
+LED_DispAlloff();
+EINT_init();
+IRQEnable();
+
+while(1);
+return(0);
+}
